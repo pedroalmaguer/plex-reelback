@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Plex Reelback</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <h1>Your Plex Wrapped</h1>
+    
+    <div id="stats">
+        <h2>Watch Stats (Last 30 Days)</h2>
+        {% for user in user_stats %}
+        <div class="user-stat">
+            <h3>{{ user.friendly_name }}</h3>
+            <p>Total Time: {{ (user.total_time|int / 3600)|round(1) }} hours</p>
+            <p>Total Plays: {{ user.total_plays }}</p>
+        </div>
+        {% endfor %}
+
+        <h2>Most Watched TV Shows</h2>
+        <div class="shows">
+            {% for show in tv_stats %}
+            <div class="show">
+                <h3>{{ show.title }}</h3>
+                <p>Plays: {{ show.total_plays }}</p>
+                <p>Duration: {{ (show.total_duration|int / 3600)|round(1) }} hours</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html
