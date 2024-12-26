@@ -2,12 +2,15 @@
 from flask import Flask, render_template
 import requests
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
 
-# Configure these
-TAUTULLI_URL = "http://localhost:8181"
-TAUTULLI_API_KEY = "your_api_key"
+TAUTULLI_URL = os.getenv('TAUTULLI_URL')
+TAUTULLI_API_KEY = os.getenv('TAUTULLI_API_KEY')
 
 def get_tautulli_data(cmd, **params):
     params.update({
@@ -19,16 +22,9 @@ def get_tautulli_data(cmd, **params):
 
 @app.route('/')
 def index():
-    # Get watch statistics for last 30 days
     thirty_days_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
-    
-    # Get watch history
     history = get_tautulli_data('get_history', length=1000, start_date=thirty_days_ago)
-    
-    # Get user stats
     user_stats = get_tautulli_data('get_user_watch_time_stats', query_days=30)
-    
-    # Get most watched TV shows
     tv_stats = get_tautulli_data('get_home_stats', stat_id='top_tv')
     
     return render_template('index.html',
