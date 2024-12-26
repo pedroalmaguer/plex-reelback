@@ -23,10 +23,8 @@
             {% for show in tv_stats %}
             <div class="show">
                 <h3>{{ show.title }}</h3>
-                <p>Plays: {{ show.plays }}</p>
-                {% if show.duration is defined %}
-                <p>Duration: {{ (show.duration|int / 3600)|round(1) }} hours</p>
-                {% endif %}
+                <p>Plays: {{ show.total_plays }}</p>
+                <p>Users: {{ show.users_watched }}</p>
             </div>
             {% endfor %}
         </div>
