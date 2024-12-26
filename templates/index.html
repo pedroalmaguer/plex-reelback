@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Plex Reelback</title>
+    <title>Plex Wrapped</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
@@ -23,11 +23,13 @@
             {% for show in tv_stats %}
             <div class="show">
                 <h3>{{ show.title }}</h3>
-                <p>Plays: {{ show.total_plays }}</p>
-                <p>Duration: {{ (show.total_duration|int / 3600)|round(1) }} hours</p>
+                <p>Plays: {{ show.plays }}</p>
+                {% if show.duration is defined %}
+                <p>Duration: {{ (show.duration|int / 3600)|round(1) }} hours</p>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
     </div>
 </body>
-</html
+</html>
