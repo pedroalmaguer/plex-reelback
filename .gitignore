@@ -1,2 +1,5 @@
 #Env files
 .env
+
+#Tautulli DB
+taut.db
