@@ -4,21 +4,6 @@
     <title>Plex Wrapped</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <style>
-        .duration-buttons {
-            margin: 20px 0;
-        }
-        .duration-buttons a {
-            margin-right: 10px;
-            text-decoration: none;
-        }
-        .selected {
-            background-color: #666;
-            color: white;
-        }
-        .custom-range {
-            display: inline-block;
-            margin-left: 10px;
-        }
         .display-box {
             width: 300px;
             height: 200px;
@@ -63,62 +48,9 @@
     </style>
     <script>
         let currentIndex = 0;
-        const shows = {{ tv_stats | tojson }};
+        const shows = {{ tv_stats | tojson | safe }};
 
         function updateDisplay() {
             const displayBox = document.getElementById('display-box');
-            const show = shows[currentIndex];
-            displayBox.innerHTML = `
-                <h3>${show.title}</h3>
-                <p>Plays: ${show.total_plays}</p>
-                <p>Users: ${show.users_watched}</p>
-            `;
-            document.getElementById('prev-button').disabled = currentIndex === 0;
-            document.getElementById('next-button').disabled = currentIndex === shows.length - 1;
-        }
-
-        function showPrevious() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                updateDisplay();
-            }
-        }
-
-        function showNext() {
-            if (currentIndex < shows.length - 1) {
-                currentIndex++;
-                updateDisplay();
-            }
-        }
-
-        window.onload = function() {
-            updateDisplay();
-        };
-    </script>
-</head>
-<body>
-    <h1>Your Plex Wrapped</h1>
-    
-    <div class="duration-buttons">
-        <!-- Links for predefined durations -->
-        <a href="/?days=1" class="button {% if selected_days == 1 %}selected{% endif %}">1 Day</a>
-        <a href="/?days=7" class="button {% if selected_days == 7 %}selected{% endif %}">1 Week</a>
-        <a href="/?days=30" class="button {% if selected_days == 30 %}selected{% endif %}">1 Month</a>
-        
-        <!-- Custom duration form -->
-        <form class="custom-range" action="/" method="get" style="display: inline;">
-            <input type="number" name="days" min="1" max="365" placeholder="Custom days" value="{{ selected_days }}">
-            <button type="submit">Go</button>
-        </form>
-    </div>
-
-    <h2>Most Watched TV Shows (Last {{ selected_days }} Days)</h2>
-    <div id="display-box" class="display-box">
-        <!-- Show information will be dynamically inserted here -->
-    </div>
-    <div class="navigation-buttons">
-        <button id="prev-button" onclick="showPrevious()">&#8592; Previous</button>
-        <button id="next-button" onclick="showNext()">Next &#8594;</button>
-    </div>
-</body>
-</html>
+            if (shows.length === 0) {
+                displayBox.innerHTML = `<p>No TV sh
