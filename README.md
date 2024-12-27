@@ -19,3 +19,6 @@ Powered by Flask, HTMX and AI (For now)
       - Settings->Imports & Backups->Under Directories select "Backup Database"
       - Once Backup is complete, SSH to your Tautulli server, navigate to the backup directory (Default /root/snap/tautulli/common/Tautulli/backups)
       - Copy latest backup created to your root project folder
+
+2. TBD
+3. TBD

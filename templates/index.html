@@ -20,12 +20,13 @@
                 <select id="user" name="user_id" onchange="document.getElementById('user-form').submit();">
                     <option value="" disabled {% if not session.get('user_id') %}selected{% endif %}>Select a user</option>
                     {% for user in users %}
-                    <option value="{{ user['user_id'] }}" {% if session.get('user_id') == user['user_id'] %}selected{% endif %}>
-                        {{ user['username'] }}
+                    <option value="{{ user.user_id }}" {% if session.get('user_id') == user.user_id %}selected{% endif %}>
+                        {{ user.username }}
                     </option>
                     {% endfor %}
                 </select>
             </form>
+            
             
             <nav>
                 <button onclick="loadContent('/stats_overview', 'Overview')">Overview</button>

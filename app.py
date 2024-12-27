@@ -35,6 +35,15 @@ def index():
     users = User.query.all()
     return render_template('index.html', users=users)
 
+@app.route('/test_users')
+def test_users():
+    try:
+        users = User.query.all()
+        return f"Users: {[user.username for user in users]}"
+    except Exception as e:
+        return f"Error fetching users: {e}"
+
+
 # Initialize the database
 if __name__ == '__main__':
     with app.app_context():
