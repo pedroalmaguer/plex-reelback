@@ -13,7 +13,7 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <h1>Stats App</h1>
+                <h1>Stats App {{name}}</h1>
             </div>
             <form id="user-form" method="post" action="/set_user">
                 <label for="user">Select User:</label>
@@ -21,7 +21,7 @@
                     <option value="" disabled {% if not session.get('user_id') %}selected{% endif %}>Select a user</option>
                     {% for user in users %}
                     <option value="{{ user.user_id }}" {% if session.get('user_id') == user.user_id %}selected{% endif %}>
-                        {{ user.username }}
+                        {{ user.username }} 
                     </option>
                     {% endfor %}
                 </select>

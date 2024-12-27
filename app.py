@@ -1,10 +1,14 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, redirect
 from flask_sqlalchemy import SQLAlchemy
+import os
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///taut.db'  # Path to your SQLite database
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///taut.db'  # Path to your SQLite database
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "taut.db")}'
 
 db = SQLAlchemy(app)
 
@@ -17,7 +21,7 @@ class SessionHistory(db.Model):
     stopped = db.Column(db.Integer, nullable=False)  # Unix timestamp
     parent_rating_key = db.Column(db.Integer, nullable=True)
     media_type = db.Column(db.Integer, nullable=False)
-    rating_key = db.Column(db.Integer, nullable=False)
+    rating_key = db.Column(db.Integer, nullable=True)
 
 class SessionHistoryMetadata(db.Model):
     __tablename__ = 'session_history_metadata'
@@ -34,6 +38,8 @@ class User(db.Model):
 @app.route('/')
 def index():
     users = User.query.all()
+    name = request.args.get('name')
+    #return render_template('index.html', users=users, name=name) url example
     return render_template('index.html', users=users)
 
 # Route to set user
