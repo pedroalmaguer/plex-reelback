@@ -29,87 +29,14 @@ class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
 
-# Route for index
+# Example route
 @app.route('/')
 def index():
     users = User.query.all()
     return render_template('index.html', users=users)
 
-# Route to set user
-@app.route('/set_user', methods=['POST'])
-def set_user():
-    user_id = request.form.get('user_id')
-    if user_id:
-        session['user_id'] = int(user_id)
-    return redirect('/')
-
-# Route for stats overview
-@app.route('/stats_overview', methods=['POST'])
-def stats_overview():
-    user_id = session.get('user_id')
-    if not user_id:
-        return "<p>No user selected. Please select a user first.</p>"
-
-    total_sessions = SessionHistory.query.filter_by(user_id=user_id).count()
-    total_minutes_watched = db.session.query(
-        db.func.sum((SessionHistory.stopped - SessionHistory.started) / 60)
-    ).filter(SessionHistory.user_id == user_id).scalar()
-
-    unique_titles_watched = db.session.query(
-        db.func.count(db.distinct(SessionHistory.parent_rating_key))
-    ).filter(SessionHistory.user_id == user_id).scalar()
-
-    stats = {
-        'total_sessions': total_sessions,
-        'total_minutes_watched': total_minutes_watched or 0,
-        'unique_titles_watched': unique_titles_watched or 0
-    }
-    username = User.query.filter_by(user_id=user_id).first().username
-
-    return render_template('stats_overview.html', stats=stats, username=username)
-
-# Route for movies watched in 2024
-@app.route('/movies_2024', methods=['POST'])
-def movies_2024():
-    user_id = session.get('user_id')
-    if not user_id:
-        return "<p>No user selected. Please select a user first.</p>"
-
-    movies = db.session.query(
-        SessionHistoryMetadata.full_title.label('title'),
-        db.func.count(SessionHistory.rating_key).label('watch_count'),
-        db.func.sum((SessionHistory.stopped - SessionHistory.started) / 60).label('total_time')
-    ).join(SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key)\
-    .filter(SessionHistory.user_id == user_id, SessionHistory.media_type == 'movie')\
-    .group_by(SessionHistoryMetadata.full_title)\
-    .order_by(db.func.count(SessionHistory.rating_key).desc())\
-    .all()
-
-    username = User.query.filter_by(user_id=user_id).first().username
-    return render_template('movies_2024.html', movies=movies, username=username)
-
-
-# Route for last watched items
-@app.route('/last_watched', methods=['POST'])
-def last_watched():
-    user_id = session.get('user_id')
-    if not user_id:
-        return "<p>No user selected. Please select a user first.</p>"
-
-    last_watched_items = db.session.query(
-        SessionHistoryMetadata.full_title.label('title'),
-        db.func.datetime(SessionHistory.stopped, 'unixepoch').label('watch_time'),
-        SessionHistory.media_type
-    ).join(SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key)\
-    .filter(SessionHistory.user_id == user_id)\
-    .filter(SessionHistory.media_type.in_(['movie', 'episode']))\
-    .order_by(SessionHistory.stopped.desc())\
-    .limit(10)\
-    .all()
-
-    username = User.query.filter_by(user_id=user_id).first().username
-    return render_template('last_watched.html', items=last_watched_items, username=username)
-
-
+# Initialize the database
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
