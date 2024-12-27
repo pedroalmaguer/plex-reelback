@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///taut.db'  # Path to your SQLite database
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 db = SQLAlchemy(app)
 
@@ -17,7 +17,7 @@ class SessionHistory(db.Model):
     stopped = db.Column(db.Integer, nullable=False)  # Unix timestamp
     parent_rating_key = db.Column(db.Integer, nullable=True)
     media_type = db.Column(db.Integer, nullable=False)
-    rating_key = db.Column(db.Integer, nullable=False)  # Add this column
+    rating_key = db.Column(db.Integer, nullable=False)
 
 class SessionHistoryMetadata(db.Model):
     __tablename__ = 'session_history_metadata'
