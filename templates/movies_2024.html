@@ -4,27 +4,60 @@
 
 {% block content %}
 <h1>Movies Watched in 2024</h1>
-{% if movies %}
-<table>
-    <tr>
-        <th>Movie Title</th>
-        <th>First Watch Time</th>
-        <th>Watch Count</th>
-        <th>Total Minutes Watched</th>
-        <th>Total Hours Watched</th>
-    </tr>
-    {% for movie in movies %}
-    <tr>
-        <td>{{ movie.movie_title }}</td>
-        <td>{{ movie.first_watch_time }}</td>
-        <td>{{ movie.watch_count }}</td>
-        <td>{{ movie.total_minutes_watched }}</td>
-        <td>{{ movie.total_minutes_watched // 60 }} hours {{ movie.total_minutes_watched % 60 }} minutes</td>
-    </tr>
-    {% endfor %}
-</table>
-{% else %}
-<p>No movies watched in 2024 for this user.</p>
-{% endif %}
+
+<div class="movie-container">
+    <button class="scroll-button left" onclick="navigateLeft()">&#8249;</button>
+    <div class="movie-display">
+        {% for movie in movies | sort(attribute='watch_count', reverse=true) %}
+        <div class="movie-card">
+            <h2>{{ movie.movie_title }}</h2>
+            <p><strong>First Watched:</strong> {{ movie.first_watch_time | datetimeformat }}</p>
+            <p><strong>Watch Count:</strong> {{ movie.watch_count }}</p>
+            <p><strong>Total Watched:</strong> 
+                {{ movie.total_minutes_watched // 60 }} hours 
+                {{ movie.total_minutes_watched % 60 }} minutes
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+    <button class="scroll-button right" onclick="navigateRight()">&#8250;</button>
+</div>
+
 <a href="/" class="button">Back to Home</a>
+
+<script>
+    let currentIndex = 0;
+
+    function updateCardVisibility() {
+        const cards = document.querySelectorAll('.movie-card');
+        cards.forEach((card, index) => {
+            card.style.display = index === currentIndex ? 'block' : 'none';
+        });
+    }
+
+    function navigateLeft() {
+        const cards = document.querySelectorAll('.movie-card');
+        if (currentIndex > 0) {
+            currentIndex--; // Move to the previous card
+            updateCardVisibility();
+        } else {
+            console.log("No more cards to the left");
+        }
+    }
+
+    function navigateRight() {
+        const cards = document.querySelectorAll('.movie-card');
+        if (currentIndex < cards.length - 1) {
+            currentIndex++; // Move to the next card
+            updateCardVisibility();
+        } else {
+            console.log("No more cards to the right");
+        }
+    }
+
+    // Initialize visibility on page load
+    document.addEventListener('DOMContentLoaded', updateCardVisibility);
+</script>
+
+
 {% endblock %}

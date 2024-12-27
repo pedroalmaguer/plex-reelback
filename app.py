@@ -1,11 +1,36 @@
 from flask import Flask, render_template, request, redirect, session, url_for
+from datetime import datetime
 import sqlite3
 import logging
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 DB_PATH = 'taut.db'
 logging.basicConfig(level=logging.DEBUG)
+
+def ordinal_suffix(day):
+    """Get the ordinal suffix for a given day."""
+    if 11 <= day <= 13:
+        return "th"
+    if day % 10 == 1:
+        return "st"
+    if day % 10 == 2:
+        return "nd"
+    if day % 10 == 3:
+        return "rd"
+    return "th"
+
+@app.template_filter('datetimeformat')
+def datetimeformat(value):
+    """Format a datetime string with ordinal suffixes like 'January 2nd, 2024'."""
+    if not value:
+        return ""
+    dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+    day = dt.day
+    return dt.strftime(f"%B {day}{ordinal_suffix(day)}, %Y")
+
+
 
 def query_db(query, params=()):
     """Helper function to query the SQLite database."""
@@ -19,7 +44,7 @@ def query_db(query, params=()):
 
 def get_users():
     """Fetch all users for the dropdown."""
-    query = "SELECT id, username AS friendly_name FROM users ORDER BY username ASC"
+    query = "SELECT user_id, username AS friendly_name FROM users ORDER BY username ASC"
     return query_db(query)
 
 @app.route('/')
@@ -28,13 +53,35 @@ def index():
     users = get_users()
     return render_template('index.html', users=users)
 
+# @app.route('/set_user', methods=['POST'])
+# def set_user():
+#     """Set a user in the session."""
+#     user_id = request.form.get('user_id')
+#     if user_id:
+#         session['user_id'] = int(user_id)
+#         logging.debug(f"Stored user_id in session: {session['user_id']}")
+#     return redirect('/')
+# @app.route('/set_user', methods=['POST'])
+# def set_user():
+#     """Set the selected user in the session."""
+#     session['user_id'] = 19927635  # Replace with a valid user_id
+#     logging.debug(f"Hardcoded user_id in session: {session['user_id']}")
+#     return redirect('/')
 @app.route('/set_user', methods=['POST'])
 def set_user():
-    """Set a user in the session."""
-    user_id = request.form.get('user_id')
+    """Set the selected user in the session."""
+    user_id = request.form.get('user_id')  # Retrieve the `user_id` from the form
+    logging.debug(f"Form submitted with user_id: {user_id}")  # Log the `user_id`
+
     if user_id:
-        session['user_id'] = int(user_id)
+        session['user_id'] = int(user_id)  # Store the `user_id` in the session
+        logging.debug(f"Stored user_id in session: {session['user_id']}")
+    else:
+        logging.warning("No user_id received in form submission.")
+    
     return redirect('/')
+
+
 
 @app.route('/auth_plex')
 def auth_plex():
@@ -60,8 +107,9 @@ def user_stats():
 def movies_2024():
     """Display movies watched by the selected user in 2024."""
     user_id = session.get('user_id')
+    logging.debug(f"Retrieved user_id from session: {user_id}")
     if not user_id:
-        return redirect('/')  # Redirect to home if no user is selected
+        return redirect('/')
 
     query = """
         SELECT 
@@ -94,8 +142,9 @@ def movies_2024():
 def stats_overview():
     """Display overall stats for the selected user."""
     user_id = session.get('user_id')
+    logging.debug(f"Retrieved user_id from session: {user_id}")
     if not user_id:
-        return redirect('/')  # Redirect to home if no user is selected
+        return redirect('/')  # Redirect if no user is selected
 
     query = """
         SELECT 
@@ -110,15 +159,8 @@ def stats_overview():
             AND datetime(started, 'unixepoch') >= datetime('now', '-1 year');
     """
     stats = query_db(query, (user_id,))
-    logging.debug(f"Query results for user_id {user_id}: {stats}")
-    if not stats or stats[0]['total_minutes_watched'] is None:
-        stats = [{
-            "total_sessions": 0,
-            "total_minutes_watched": 0,
-            "unique_titles_watched": 0,
-            "unique_series_watched": 0,
-        }]
     return render_template('stats_overview.html', stats=stats)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

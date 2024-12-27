@@ -6,29 +6,33 @@
 <h1>Welcome to Your Plex Stats</h1>
 
 <!-- User Selection Form -->
+
 <form method="post" action="/set_user">
     <label for="user">Choose a User:</label>
     <select id="user" name="user_id" onchange="this.form.submit()">
-        <option value="" disabled {% if not session.get('user_id') %}selected{% endif %}>Select a user</option>
+        <option value="" disabled selected>Select a user</option>
         {% for user in users %}
-        <option value="{{ user.id }}" {% if session.get('user_id') == user.id %}selected{% endif %}>
-            {{ user.friendly_name }}
-        </option>
+        <option value="{{ user.user_id }}">{{ user.friendly_name }}</option>
         {% endfor %}
     </select>
 </form>
 
-<!-- Display Selected User -->
+
+<!-- Display Current User -->
 {% if session.get('user_id') %}
-<p>Selected User: <strong>{{ session.get('user_id') }}</strong></p>
-<form method="post" action="/movies_2024">
-    <input type="hidden" name="user_id" value="{{ session.get('user_id') }}">
-    <button type="submit" class="button">View Movies Watched in 2024</button>
-</form>
+<p>Current User: <strong>{{ session.get('user_id') }}</strong></p>
+
+<!-- Stats Buttons -->
 <form method="post" action="/stats_overview">
-    <input type="hidden" name="user_id" value="{{ session.get('user_id') }}">
     <button type="submit" class="button">View Overall Stats</button>
 </form>
+<form method="post" action="/movies_2024">
+    <button type="submit" class="button">View Movies Watched in 2024</button>
+</form>
+<form method="post" action="/another_stats_route">
+    <button type="submit" class="button">View Another Stat</button>
+</form>
+
 {% else %}
 <p>Please select a user to view stats.</p>
 {% endif %}
