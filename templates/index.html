@@ -1,56 +1,35 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Plex Wrapped</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-    <style>
-        .display-box {
-            width: 300px;
-            height: 200px;
-            margin: 0 auto;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            background-color: #fff;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        .display-box h3 {
-            margin: 0;
-            font-size: 1.5em;
-        }
-        .display-box p {
-            margin: 5px 0;
-            font-size: 1em;
-        }
-        .navigation-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        .navigation-buttons button {
-            padding: 5px 15px;
-            font-size: 1em;
-            cursor: pointer;
-            background-color: #666;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        .navigation-buttons button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-    </style>
-    <script>
-        let currentIndex = 0;
-        const shows = {{ tv_stats | tojson | safe }};
+{% extends "base.html" %}
 
-        function updateDisplay() {
-            const displayBox = document.getElementById('display-box');
-            if (shows.length === 0) {
-                displayBox.innerHTML = `<p>No TV sh
+{% block title %}Plex Stats - Home{% endblock %}
+
+{% block content %}
+<h1>Welcome to Your Plex Stats</h1>
+
+<!-- User Selection Form -->
+<form method="post" action="/set_user">
+    <label for="user">Choose a User:</label>
+    <select id="user" name="user_id" onchange="this.form.submit()">
+        <option value="" disabled {% if not session.get('user_id') %}selected{% endif %}>Select a user</option>
+        {% for user in users %}
+        <option value="{{ user.id }}" {% if session.get('user_id') == user.id %}selected{% endif %}>
+            {{ user.friendly_name }}
+        </option>
+        {% endfor %}
+    </select>
+</form>
+
+<!-- Display Selected User -->
+{% if session.get('user_id') %}
+<p>Selected User: <strong>{{ session.get('user_id') }}</strong></p>
+<form method="post" action="/movies_2024">
+    <input type="hidden" name="user_id" value="{{ session.get('user_id') }}">
+    <button type="submit" class="button">View Movies Watched in 2024</button>
+</form>
+<form method="post" action="/stats_overview">
+    <input type="hidden" name="user_id" value="{{ session.get('user_id') }}">
+    <button type="submit" class="button">View Overall Stats</button>
+</form>
+{% else %}
+<p>Please select a user to view stats.</p>
+{% endif %}
+{% endblock %}

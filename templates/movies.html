@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Movies Watched</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <h1>Movies Watched in the Last 7 Days</h1>
+    <table>
+        <tr>
+            <th>User</th>
+            <th>Title</th>
+            <th>Start Time</th>
+            <th>Stop Time</th>
+            <th>Duration (minutes)</th>
+        </tr>
+        {% for movie in movies %}
+        <tr>
+            <td>{{ movie.user }}</td>
+            <td>{{ movie.title }}</td>
+            <td>{{ movie.start_time }}</td>
+            <td>{{ movie.stop_time }}</td>
+            <td>{{ (movie.duration / 60) | round(2) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

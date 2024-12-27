@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Movies Watched in 2024{% endblock %}
+
+{% block content %}
+<h1>Movies Watched in 2024</h1>
+{% if movies %}
+<table>
+    <tr>
+        <th>Movie Title</th>
+        <th>First Watch Time</th>
+        <th>Watch Count</th>
+        <th>Total Minutes Watched</th>
+        <th>Total Hours Watched</th>
+    </tr>
+    {% for movie in movies %}
+    <tr>
+        <td>{{ movie.movie_title }}</td>
+        <td>{{ movie.first_watch_time }}</td>
+        <td>{{ movie.watch_count }}</td>
+        <td>{{ movie.total_minutes_watched }}</td>
+        <td>{{ movie.total_minutes_watched // 60 }} hours {{ movie.total_minutes_watched % 60 }} minutes</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No movies watched in 2024 for this user.</p>
+{% endif %}
+<a href="/" class="button">Back to Home</a>
+{% endblock %}
