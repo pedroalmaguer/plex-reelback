@@ -1,263 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{% block title %}Plex Stats{% endblock %}</title>
-    <style>
-        /* Page Transitions */
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #111;
-            color: #fff;
-            animation: fadeIn 1s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        .fade-out {
-            animation: fadeOut 1s ease-in-out;
-        }
-
-        @keyframes fadeOut {
-            from {
-                opacity: 1;
-            }
-            to {
-                opacity: 0;
-            }
-        }
-
-        .container {
-            margin: 0 auto;
-            padding: 20px;
-            max-width: 800px;
-            text-align: center;
-        }
-
-        /* Buttons */
-        .button {
-            display: inline-block;
-            padding: 15px 25px;
-            font-size: 16px;
-            color: #111;
-            background-color: #e5a00d;
-            text-decoration: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-        }
-
-        .button:hover {
-            background-color: #d48d0c;
-            transform: scale(1.05);
-        }
-
-        /* Select Dropdown */
-        select {
-            padding: 10px;
-            font-size: 16px;
-            background-color: #222;
-            color: #fff;
-            border: 1px solid #e5a00d;
-            border-radius: 5px;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        select:focus {
-            border-color: #e5a00d;
-            box-shadow: 0 0 8px #e5a00d;
-        }
-
-        .card-container {
-            display: flex;
-            gap: 1rem;
-            overflow-x: auto;
-            padding: 1rem;
-            scroll-behavior: smooth;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            background-color: #f9f9f9;
-        }
-
-        .card-container:focus {
-            outline: none;
-        }
-
-        .card {
-            flex: 0 0 300px; /* Set fixed width for each card */
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            padding: 1rem;
-            background-color: #fff;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .card h3 {
-            margin-top: 0;
-            font-size: 1.25rem;
-            color: #333;
-        }
-
-        .card p {
-            margin: 0.5rem 0;
-            color: #666;
-        }
-
-        .card-container::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .card-container::-webkit-scrollbar-thumb {
-            background-color: #888;
-            border-radius: 10px;
-        }
-
-        .card-container::-webkit-scrollbar-thumb:hover {
-            background-color: #555;
-        }
-
-        .movie-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            margin-top: 20px;
-            padding: 20px;
-        }
-
-        .movie-display {
-            position: relative;
-            width: 350px;
-            height: 450px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .movie-card {
-            background: #1f1f1f; /* Dark background for cards */
-            border: 2px solid #ff6f61; /* Accent border */
-            border-radius: 16px;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3); /* Stronger shadow for depth */
-            width: 100%;
-            height: 100%;
-            padding: 20px;
-            display: none; /* Only the active card is displayed */
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #f5f5f5; /* Light text color */
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            animation: fadeIn 0.5s ease-in-out;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .movie-card:hover {
-            transform: scale(1.05); /* Subtle zoom effect on hover */
-        }
-
-        .movie-card h2 {
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            color: #ff6f61; /* Accent color for titles */
-            font-weight: bold;
-        }
-
-        .movie-card p {
-            font-size: 1.1rem;
-            margin: 10px 0;
-        }
-
-        .scroll-button {
-            background-color: #ff6f61; /* Accent color */
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            position: absolute;
-            z-index: 10;
-            top: 50%;
-            transform: translateY(-50%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s ease-in-out, transform 0.2s ease;
-        }
-
-        .scroll-button:hover {
-            background-color: #ff856e;
-        }
-        /* Add click animation */
-        .scroll-button:active {
-            transform: translateY(-50%) scale(0.95); /* Slightly shrink on click */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .scroll-button.left {
-            left: -20px;
-        }
-
-        .scroll-button.right {
-            right: -20px;
-        }
-
-        .button {
-            margin-top: 20px;
-            padding: 12px 24px;
-            background-color: #ff6f61;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s ease-in-out;
-        }
-
-        .button:hover {
-            background-color: #ff856e;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stats App</title>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <div class="container">
-        {% block content %}{% endblock %}
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Stats App</h1>
+            </div>
+            <form id="user-form" method="post" action="/set_user">
+                <label for="user">Select User:</label>
+                <select id="user" name="user_id" onchange="document.getElementById('user-form').submit();">
+                    <option value="" disabled selected>Select a user</option>
+                    {% for user in users %}
+                    <option value="{{ user['user_id'] }}" {% if session.get('user_id') == user['user_id'] %}selected{% endif %}>
+                        {{ user['username'] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+            <nav>
+                <button onclick="loadContent('/stats_overview', 'Overview')">Overview</button>
+                <button onclick="loadContent('/movies_2024', 'Movies Watched')">Movies Watched</button>
+                <button onclick="loadContent('/last_watched', 'Last Watched')">Last Watched</button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <header class="stats-header">
+                <h2>{{ username }} - Stats</h2>
+            </header>
+            <div class="stats-content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
     </div>
-    <script>
-        /* Apply fade-out animation on navigation */
-        document.addEventListener('DOMContentLoaded', function () {
-            const links = document.querySelectorAll('a, form');
-            links.forEach(link => {
-                link.addEventListener('click', function (e) {
-                    document.body.classList.add('fade-out');
-                });
-            });
-        });
-    </script>
 </body>
 </html>

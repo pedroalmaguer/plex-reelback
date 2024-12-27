@@ -1,44 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Last Watched Items</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-    </style>
-</head>
-<body>
-    <h1>Last 10 Watched Items</h1>
-    {% if items %}
-    <table>
-        <tr>
-            <th>Title</th>
-            <th>Start Time</th>
-            <th>Stop Time</th>
-            <th>Duration (minutes)</th>
-        </tr>
+<div>
+    <h2>Last Watched</h2>
+    <ul>
         {% for item in items %}
-        <tr>
-            <td>{{ item.item_title }}</td>
-            <td>{{ item.start_time }}</td>
-            <td>{{ item.stop_time }}</td>
-            <td>{{ item.duration_minutes | round(2) }}</td>
-        </tr>
+        <ul>{{ item.title }} - {{ item.watch_time }}</ul>
         {% endfor %}
-    </table>
-    {% else %}
-    <p>No watched items found for the selected user.</p>
-    {% endif %}
-    <a href="/">Back to Home</a>
-</body>
-</html>
+    </ul>
+</div>

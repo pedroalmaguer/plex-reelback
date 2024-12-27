@@ -1,36 +1,10 @@
-{% extends "base.html" %}
-
-{% block title %}Overall Stats{% endblock %}
-
 {% block content %}
-<h1>Overall Stats</h1>
-{% if stats and stats|length > 0 %}
-<table>
-    <tr>
-        <th>Total Sessions</th>
-        <th>Total Minutes Watched</th>
-        <th>Total Hours Watched</th>
-        <th>Unique Titles Watched</th>
-        <th>Unique Series Watched</th>
-    </tr>
-    {% for stat in stats %}
-    <tr>
-        <td>{{ stat.total_sessions }}</td>
-        <td>{{ stat.total_minutes_watched }}</td>
-        <td>
-            {% if stat.total_minutes_watched is not none %}
-                {{ stat.total_minutes_watched // 60 }} hours {{ stat.total_minutes_watched % 60 }} minutes
-            {% else %}
-                0 hours 0 minutes
-            {% endif %}
-        </td>
-        <td>{{ stat.unique_titles_watched }}</td>
-        <td>{{ stat.unique_series_watched }}</td>
-    </tr>
-    {% endfor %}
-</table>
-{% else %}
-<p>No overall stats available for this user.</p>
-{% endif %}
-<a href="/" class="button">Back to Home</a>
+<div>
+    <h2>Overview</h2>
+    <ul>
+        <ul>Total Sessions: {{ stats.total_sessions }}</ul>
+        <ul>Total Minutes Watched: {{ stats.total_minutes_watched }}</ul>
+        <ul>Unique Titles Watched: {{ stats.unique_titles_watched }}</ul>
+    </ul>
+</div>
 {% endblock %}

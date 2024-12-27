@@ -1,165 +1,114 @@
-from flask import Flask, render_template, request, redirect, session, url_for
-from datetime import datetime
-import sqlite3
-import logging
-
+from flask import Flask, render_template, request, session
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
-DB_PATH = 'taut.db'
-logging.basicConfig(level=logging.DEBUG)
+app.secret_key = "your_secret_key"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///taut.db'  # Path to your SQLite database
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-def ordinal_suffix(day):
-    """Get the ordinal suffix for a given day."""
-    if 11 <= day <= 13:
-        return "th"
-    if day % 10 == 1:
-        return "st"
-    if day % 10 == 2:
-        return "nd"
-    if day % 10 == 3:
-        return "rd"
-    return "th"
+db = SQLAlchemy(app)
 
-@app.template_filter('datetimeformat')
-def datetimeformat(value):
-    """Format a datetime string with ordinal suffixes like 'January 2nd, 2024'."""
-    if not value:
-        return ""
-    dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-    day = dt.day
-    return dt.strftime(f"%B {day}{ordinal_suffix(day)}, %Y")
+# Define ORM models
+class SessionHistory(db.Model):
+    __tablename__ = 'session_history'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    started = db.Column(db.Integer, nullable=False)  # Unix timestamp
+    stopped = db.Column(db.Integer, nullable=False)  # Unix timestamp
+    parent_rating_key = db.Column(db.String, nullable=True)
+    media_type = db.Column(db.String, nullable=False)
 
+class SessionHistoryMetadata(db.Model):
+    __tablename__ = 'session_history_metadata'
+    rating_key = db.Column(db.String, primary_key=True)
+    full_title = db.Column(db.String, nullable=False)
+    duration = db.Column(db.Integer, nullable=False)
 
+class User(db.Model):
+    __tablename__ = 'users'
+    user_id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String, nullable=False)
 
-def query_db(query, params=()):
-    """Helper function to query the SQLite database."""
-    connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = sqlite3.Row  # Enables dict-like access
-    cursor = connection.cursor()
-    cursor.execute(query, params)
-    results = cursor.fetchall()
-    connection.close()
-    return [dict(row) for row in results]
-
-def get_users():
-    """Fetch all users for the dropdown."""
-    query = "SELECT user_id, username AS friendly_name FROM users ORDER BY username ASC"
-    return query_db(query)
-
+# Route for index
 @app.route('/')
 def index():
-    """Render the home page."""
-    users = get_users()
+    users = User.query.all()
     return render_template('index.html', users=users)
 
-# @app.route('/set_user', methods=['POST'])
-# def set_user():
-#     """Set a user in the session."""
-#     user_id = request.form.get('user_id')
-#     if user_id:
-#         session['user_id'] = int(user_id)
-#         logging.debug(f"Stored user_id in session: {session['user_id']}")
-#     return redirect('/')
-# @app.route('/set_user', methods=['POST'])
-# def set_user():
-#     """Set the selected user in the session."""
-#     session['user_id'] = 19927635  # Replace with a valid user_id
-#     logging.debug(f"Hardcoded user_id in session: {session['user_id']}")
-#     return redirect('/')
+# Route to set user
 @app.route('/set_user', methods=['POST'])
 def set_user():
-    """Set the selected user in the session."""
-    user_id = request.form.get('user_id')  # Retrieve the `user_id` from the form
-    logging.debug(f"Form submitted with user_id: {user_id}")  # Log the `user_id`
-
+    user_id = request.form.get('user_id')
     if user_id:
-        session['user_id'] = int(user_id)  # Store the `user_id` in the session
-        logging.debug(f"Stored user_id in session: {session['user_id']}")
-    else:
-        logging.warning("No user_id received in form submission.")
-    
+        session['user_id'] = int(user_id)
     return redirect('/')
 
-
-
-@app.route('/auth_plex')
-def auth_plex():
-    """Redirect to Plex.tv OAuth login (placeholder)."""
-    # Replace this with actual OAuth implementation
-    return redirect('https://plex.tv/auth')
-
-@app.route('/user_stats')
-def user_stats():
-    """Show stats for the selected user."""
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect('/')
-    # Fetch stats from the database (placeholder)
-    user_stats = [
-        {"title": "Breaking Bad", "type": "Show", "watch_count": 42},
-        {"title": "Inception", "type": "Movie", "watch_count": 15},
-    ]
-    return render_template('user_stats.html', stats=user_stats)
-
-
-@app.route('/movies_2024', methods=['POST'])
-def movies_2024():
-    """Display movies watched by the selected user in 2024."""
-    user_id = session.get('user_id')
-    logging.debug(f"Retrieved user_id from session: {user_id}")
-    if not user_id:
-        return redirect('/')
-
-    query = """
-        SELECT 
-            sh.rating_key,
-            sh.parent_rating_key,
-            shm.full_title AS movie_title,
-            MIN(datetime(sh.started, 'unixepoch')) AS first_watch_time,
-            COUNT(sh.rating_key) AS watch_count,
-            SUM((sh.stopped - sh.started) / 60) AS total_minutes_watched
-        FROM 
-            session_history AS sh
-        JOIN 
-            session_history_metadata AS shm
-        ON 
-            sh.rating_key = shm.rating_key
-        WHERE 
-            sh.user_id = ?
-            AND sh.media_type = 'movie'
-            AND datetime(sh.started, 'unixepoch') >= '2024-01-01'
-        GROUP BY 
-            sh.rating_key, shm.full_title
-        ORDER BY 
-            first_watch_time DESC
-        LIMIT 100;
-    """
-    movies = query_db(query, (user_id,))
-    return render_template('movies_2024.html', movies=movies)
-
+# Route for stats overview
 @app.route('/stats_overview', methods=['POST'])
 def stats_overview():
-    """Display overall stats for the selected user."""
     user_id = session.get('user_id')
-    logging.debug(f"Retrieved user_id from session: {user_id}")
     if not user_id:
-        return redirect('/')  # Redirect if no user is selected
+        return "<p>No user selected. Please select a user first.</p>"
 
-    query = """
-        SELECT 
-            COUNT(*) AS total_sessions,
-            COALESCE(SUM((stopped - started) / 60), 0) AS total_minutes_watched,
-            COUNT(DISTINCT parent_rating_key) AS unique_titles_watched,
-            COUNT(DISTINCT grandparent_rating_key) AS unique_series_watched
-        FROM 
-            session_history
-        WHERE 
-            user_id = ?
-            AND datetime(started, 'unixepoch') >= datetime('now', '-1 year');
-    """
-    stats = query_db(query, (user_id,))
-    return render_template('stats_overview.html', stats=stats)
+    total_sessions = SessionHistory.query.filter_by(user_id=user_id).count()
+    total_minutes_watched = db.session.query(
+        db.func.sum((SessionHistory.stopped - SessionHistory.started) / 60)
+    ).filter(SessionHistory.user_id == user_id).scalar()
+
+    unique_titles_watched = db.session.query(
+        db.func.count(db.distinct(SessionHistory.parent_rating_key))
+    ).filter(SessionHistory.user_id == user_id).scalar()
+
+    stats = {
+        'total_sessions': total_sessions,
+        'total_minutes_watched': total_minutes_watched or 0,
+        'unique_titles_watched': unique_titles_watched or 0
+    }
+    username = User.query.filter_by(user_id=user_id).first().username
+
+    return render_template('stats_overview.html', stats=stats, username=username)
+
+# Route for movies watched in 2024
+@app.route('/movies_2024', methods=['POST'])
+def movies_2024():
+    user_id = session.get('user_id')
+    if not user_id:
+        return "<p>No user selected. Please select a user first.</p>"
+
+    movies = db.session.query(
+        SessionHistoryMetadata.full_title.label('title'),
+        db.func.count(SessionHistory.rating_key).label('watch_count'),
+        db.func.sum((SessionHistory.stopped - SessionHistory.started) / 60).label('total_time')
+    ).join(SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key)\
+    .filter(SessionHistory.user_id == user_id, SessionHistory.media_type == 'movie')\
+    .group_by(SessionHistoryMetadata.full_title)\
+    .order_by(db.func.count(SessionHistory.rating_key).desc())\
+    .all()
+
+    username = User.query.filter_by(user_id=user_id).first().username
+    return render_template('movies_2024.html', movies=movies, username=username)
+
+
+# Route for last watched items
+@app.route('/last_watched', methods=['POST'])
+def last_watched():
+    user_id = session.get('user_id')
+    if not user_id:
+        return "<p>No user selected. Please select a user first.</p>"
+
+    last_watched_items = db.session.query(
+        SessionHistoryMetadata.full_title.label('title'),
+        db.func.datetime(SessionHistory.stopped, 'unixepoch').label('watch_time'),
+        SessionHistory.media_type
+    ).join(SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key)\
+    .filter(SessionHistory.user_id == user_id)\
+    .filter(SessionHistory.media_type.in_(['movie', 'episode']))\
+    .order_by(SessionHistory.stopped.desc())\
+    .limit(10)\
+    .all()
+
+    username = User.query.filter_by(user_id=user_id).first().username
+    return render_template('last_watched.html', items=last_watched_items, username=username)
 
 
 if __name__ == '__main__':

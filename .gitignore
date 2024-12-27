@@ -5,3 +5,6 @@
 taut.db
 taut-schema.sql
 notes.txt
+
+#Excluded user files
+excluded_users.json
