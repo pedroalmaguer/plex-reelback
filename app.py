@@ -78,6 +78,17 @@ def set_user():
 # Route for stats overview
 @app.route('/stats_overview', methods=['POST'])
 def stats_overview():
+    """
+    Gathers and displays an overview of a user's statistics, including:
+    - Total sessions
+    - Total minutes watched
+    - Number of unique titles watched
+
+    Query Logic:
+    - Fetch total number of viewing sessions for the user.
+    - Calculate total minutes watched by summing the duration of all sessions.
+    - Count the number of unique titles (movies/shows) the user has watched.
+    """
     user_id = session.get('user_id')
     if not user_id:
         app.logger.error("No user selected.")
@@ -109,6 +120,17 @@ def stats_overview():
 # Route for movies watched in 2024
 @app.route('/movies_2024', methods=['POST'])
 def movies_2024():
+    """
+    Gathers and displays data on movies watched in 2024 by the selected user, including:
+    - Title of the movie
+    - Total number of views for each movie
+    - Total time spent watching each movie
+
+    Query Logic:
+    - Join `SessionHistory` and `SessionHistoryMetadata` to fetch metadata for each movie session.
+    - Filter sessions by `media_type = 'movie'` and user ID.
+    - Group data by movie title (`full_title`) to calculate watch counts and total viewing time.
+    """
     user_id = session.get('user_id')
     if not user_id:
         app.logger.error("No user selected.")
@@ -136,6 +158,18 @@ def movies_2024():
 # Route for Last watched
 @app.route('/last_watched', methods=['POST'])
 def last_watched():
+    """
+    Gathers and displays the most recently watched items for the selected user, including:
+    - Title of the item
+    - When the item was last watched (formatted as a readable timestamp)
+    - Type of the item (movie or episode)
+
+    Query Logic:
+    - Join `SessionHistory` and `SessionHistoryMetadata` to fetch metadata for each session.
+    - Filter sessions by `media_type` to include movies and episodes.
+    - Order results by `stopped` timestamp in descending order to fetch the latest items.
+    - Limit results to the 10 most recent items.
+    """
     user_id = session.get('user_id')
     if not user_id:
         app.logger.error("No user selected.")
@@ -163,6 +197,22 @@ def last_watched():
 # Route for most popular items
 @app.route('/most_popular', methods=['POST'])
 def most_popular():
+    """
+    Gathers and displays the most popular movies and TV shows for 2024, including:
+    - Title of the media
+    - Total number of views
+    - Media type (movie or show)
+
+    Query Logic:
+    - Movies:
+        - Join `SessionHistory` and `SessionHistoryMetadata` to fetch metadata for each session.
+        - Filter by `media_type = 'movie'`.
+        - Group by movie title (`full_title`) to calculate total views.
+    - TV Shows:
+        - Similar to movies but uses `media_type = 'episode`.
+        - Aggregates episodes into shows using `parent_rating_key` and `grandparent_title`.
+    - Results for movies and shows are combined and passed to the template.
+    """
     try:
         # Query for most popular movies
         most_popular_movies = db.session.query(
@@ -225,13 +275,13 @@ def most_popular():
         return f"Error occurred: {e}", 500
 
 # Debugging routes
-@app.route('/test_users')
-def test_users():
-    try:
-        users = User.query.all()
-        return f"Users: {[user.username for user in users]}"
-    except Exception as e:
-        return f"Error fetching users: {e}"
+# @app.route('/test_users')
+# def test_users():
+#     try:
+#         users = User.query.all()
+#         return f"Users: {[user.username for user in users]}"
+#     except Exception as e:
+#         return f"Error fetching users: {e}"
 
 if __name__ == '__main__':
     app.run(debug=True)
