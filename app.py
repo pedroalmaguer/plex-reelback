@@ -33,6 +33,7 @@ class SessionHistoryMetadata(db.Model):
     rating_key = db.Column(db.Integer, primary_key=True)
     full_title = db.Column(db.String, nullable=False)
     duration = db.Column(db.Integer, nullable=False)
+    grandparent_title = db.Column(db.String, nullable=False)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -168,30 +169,51 @@ def most_popular():
             SessionHistoryMetadata.full_title.label('title'),
             db.func.count(SessionHistory.rating_key).label('watch_count'),
             db.literal('movie').label('type')
-        ).join(SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key)\
-         .filter(SessionHistory.user_id.notin_(excluded_user_ids))\
-         .filter(SessionHistory.media_type == 'movie')\
-         .filter(SessionHistory.started >= db.func.strftime('%s', '2024-01-01'))\
-         .filter(SessionHistory.stopped <= db.func.strftime('%s', '2024-12-31'))\
-         .group_by(SessionHistoryMetadata.full_title)\
-         .order_by(db.func.count(SessionHistory.rating_key).desc())\
-         .limit(10)\
-         .all()
+        ).join(
+            SessionHistory,
+            SessionHistory.rating_key == SessionHistoryMetadata.rating_key
+        ).filter(
+            SessionHistory.media_type == 'movie',
+            SessionHistory.started >= db.func.strftime('%s', '2024-01-01'),
+            SessionHistory.stopped <= db.func.strftime('%s', '2024-12-31'),
+            ~SessionHistory.user_id.in_(excluded_user_ids)
+        ).group_by(
+            SessionHistoryMetadata.full_title
+        ).order_by(
+            db.func.count(SessionHistory.rating_key).desc()
+        ).limit(10).all()
+
+        # Format movies as dictionaries
+        most_popular_movies = [
+            {'title': title, 'watch_count': watch_count, 'type': type_}
+            for title, watch_count, type_ in most_popular_movies
+        ]
 
         # Query for most popular TV shows
         most_popular_shows = db.session.query(
-            SessionHistoryMetadata.full_title.label('title'),
-            db.func.count(SessionHistory.rating_key).label('watch_count'),
-            db.literal('show').label('type')
-        ).join(SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key)\
-         .filter(SessionHistory.user_id.notin_(excluded_user_ids))\
-         .filter(SessionHistory.media_type == 'episode')\
-         .filter(SessionHistory.started >= db.func.strftime('%s', '2024-01-01'))\
-         .filter(SessionHistory.stopped <= db.func.strftime('%s', '2024-12-31'))\
-         .group_by(SessionHistoryMetadata.full_title)\
-         .order_by(db.func.count(SessionHistory.rating_key).desc())\
-         .limit(10)\
-         .all()
+            SessionHistory.parent_rating_key.label('show_id'),
+            SessionHistoryMetadata.grandparent_title.label('title'),
+            db.func.count(SessionHistory.rating_key).label('watch_count')
+        ).join(
+            SessionHistoryMetadata,
+            SessionHistory.rating_key == SessionHistoryMetadata.rating_key
+        ).filter(
+            SessionHistory.media_type == 'episode',
+            SessionHistory.started >= db.func.strftime('%s', '2024-01-01'),
+            SessionHistory.stopped <= db.func.strftime('%s', '2024-12-31'),
+            ~SessionHistory.user_id.in_(excluded_user_ids)
+        ).group_by(
+            SessionHistory.parent_rating_key,
+            SessionHistoryMetadata.grandparent_title
+        ).order_by(
+            db.func.count(SessionHistory.rating_key).desc()
+        ).limit(10).all()
+
+        # Format shows as dictionaries
+        most_popular_shows = [
+            {'title': title, 'watch_count': watch_count, 'type': 'show'}
+            for _, title, watch_count in most_popular_shows
+        ]
 
         # Combine results
         most_popular_items = most_popular_movies + most_popular_shows

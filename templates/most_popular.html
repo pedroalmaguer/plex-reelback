@@ -5,6 +5,7 @@
         </header>
         <main>
             <section class="most-popular-section">
+                <!-- Movies Table -->
                 <div class="popular-list">
                     <h2>Top 10 Most Watched Movies (2024)</h2>
                     <table>
@@ -19,13 +20,14 @@
                             {% for item in items if item.type == 'movie' %}
                             <tr>
                                 <td>{{ item.title }}</td>
-                                <td>{{ item.type | capitalize }}</td>
+                                <td>{{ item.type }}</td>
                                 <td>{{ item.watch_count }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                <!-- TV Shows Table -->
                 <div class="popular-list">
                     <h2>Top 10 Most Watched TV Shows (2024)</h2>
                     <table>
@@ -40,7 +42,7 @@
                             {% for item in items if item.type == 'show' %}
                             <tr>
                                 <td>{{ item.title }}</td>
-                                <td>{{ item.type | capitalize }}</td>
+                                <td>{{ item.type }}</td>
                                 <td>{{ item.watch_count }}</td>
                             </tr>
                             {% endfor %}
