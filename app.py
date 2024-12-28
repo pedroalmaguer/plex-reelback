@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 import os
+import json
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -34,12 +35,25 @@ class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
 
+ # Load excluded users from JSON
+try:
+    with open('excluded_users.json') as f:
+        excluded_data = json.load(f)
+        excluded_user_ids = excluded_data.get("excluded_user_ids", [])
+        excluded_usernames = excluded_data.get("excluded_usernames", [])
+except FileNotFoundError:
+    excluded_user_ids = []
+    excluded_usernames = []
+    print("excluded_users.json not found.")
+    
+
 # Route for index
 @app.route('/')
 def index():
-    users = User.query.all()
-    name = request.args.get('name')
-    #return render_template('index.html', users=users, name=name) url example
+    users = User.query.filter(~User.user_id.in_(excluded_user_ids), ~User.username.in_(excluded_usernames)).all()
+   # users = User.query.all()
+   # name = request.args.get('name')
+   # return render_template('index.html', users=users, name=name) url example
     return render_template('index.html', users=users)
 
 # Route to set user
