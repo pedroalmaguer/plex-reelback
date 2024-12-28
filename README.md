@@ -3,10 +3,10 @@
 A silly name for a hopefully silly "Wrapped" style app for Plex + Tautulli.
 Powered by Flask, HTMX and AI (For now)
 
-## Features(creep)
-- View your Tautulli stats (via Plex.tv auth)
-- Display in a fun "wrapped" style
-
+## Feature Creep
+- View your Tautulli stats
+- Display in a fun "wrapped" style.
+- Excluded users list. (excluded_users.json)
 
 ## Getting Started
 

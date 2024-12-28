@@ -204,3 +204,23 @@ footer::before {
     font-size: 24px;
     text-transform: uppercase;
 }
+
+/*General styling for most_popular.html*/
+.most-popular-section {
+    display: flex;
+    justify-content: center; /* Centers the two sections within the container */
+    gap: 40px; /* Adds space between the two lists */
+    flex-wrap: wrap; /* Ensures proper layout on smaller screens */
+}
+
+.popular-list {
+    flex: 1; /* Allows the lists to take equal space */
+    max-width: 45%; /* Ensures the lists don't take too much space */
+    text-align: center;
+}
+
+.popular-list table {
+    margin: 0 auto; /* Center the table within each section */
+    text-align: center; /* Center the content within the table */
+    width: 100%;
+}

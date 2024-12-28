@@ -5,11 +5,15 @@ import json
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
+
+# Depriated. Had issues with connecting to file.
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///taut.db'  # Path to your SQLite database
 # app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
+#Define the database path
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "taut.db")}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
@@ -35,6 +39,8 @@ class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False)
 
+######################################################################
+######################################################################
  # Load excluded users from JSON
 try:
     with open('excluded_users.json') as f:
@@ -47,6 +53,10 @@ except FileNotFoundError:
     print("excluded_users.json not found.")
     
 
+
+
+######################################################################
+######################################################################
 # Route for index
 @app.route('/')
 def index():
@@ -122,7 +132,7 @@ def movies_2024():
         app.logger.error(f"Error in movies_2024: {e}")
         return f"Error occurred: {e}", 500
 
-
+# Route for Last watched
 @app.route('/last_watched', methods=['POST'])
 def last_watched():
     user_id = session.get('user_id')
@@ -147,6 +157,49 @@ def last_watched():
         return render_template('last_watched.html', items=last_watched_items, username=username)
     except Exception as e:
         app.logger.error(f"Error in last_watched: {e}")
+        return f"Error occurred: {e}", 500
+    
+# Route for most popular items
+@app.route('/most_popular', methods=['POST'])
+def most_popular():
+    try:
+        # Query for most popular movies
+        most_popular_movies = db.session.query(
+            SessionHistoryMetadata.full_title.label('title'),
+            db.func.count(SessionHistory.rating_key).label('watch_count'),
+            db.literal('movie').label('type')
+        ).join(SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key)\
+         .filter(SessionHistory.user_id.notin_(excluded_user_ids))\
+         .filter(SessionHistory.media_type == 'movie')\
+         .filter(SessionHistory.started >= db.func.strftime('%s', '2024-01-01'))\
+         .filter(SessionHistory.stopped <= db.func.strftime('%s', '2024-12-31'))\
+         .group_by(SessionHistoryMetadata.full_title)\
+         .order_by(db.func.count(SessionHistory.rating_key).desc())\
+         .limit(10)\
+         .all()
+
+        # Query for most popular TV shows
+        most_popular_shows = db.session.query(
+            SessionHistoryMetadata.full_title.label('title'),
+            db.func.count(SessionHistory.rating_key).label('watch_count'),
+            db.literal('show').label('type')
+        ).join(SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key)\
+         .filter(SessionHistory.user_id.notin_(excluded_user_ids))\
+         .filter(SessionHistory.media_type == 'episode')\
+         .filter(SessionHistory.started >= db.func.strftime('%s', '2024-01-01'))\
+         .filter(SessionHistory.stopped <= db.func.strftime('%s', '2024-12-31'))\
+         .group_by(SessionHistoryMetadata.full_title)\
+         .order_by(db.func.count(SessionHistory.rating_key).desc())\
+         .limit(10)\
+         .all()
+
+        # Combine results
+        most_popular_items = most_popular_movies + most_popular_shows
+
+        return render_template('most_popular.html', items=most_popular_items)
+
+    except Exception as e:
+        app.logger.error(f"Error in most_popular route: {e}")
         return f"Error occurred: {e}", 500
 
 # Debugging routes

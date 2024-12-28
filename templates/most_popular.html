@@ -1,0 +1,53 @@
+<div class="most-popular-container">
+    <div class="most-popular-content">
+        <header>
+            <h1>Most Popular Movies and TV Shows</h1>
+        </header>
+        <main>
+            <section class="most-popular-section">
+                <div class="popular-list">
+                    <h2>Top 10 Most Watched Movies (2024)</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Watch Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items if item.type == 'movie' %}
+                            <tr>
+                                <td>{{ item.title }}</td>
+                                <td>{{ item.type | capitalize }}</td>
+                                <td>{{ item.watch_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="popular-list">
+                    <h2>Top 10 Most Watched TV Shows (2024)</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Watch Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items if item.type == 'show' %}
+                            <tr>
+                                <td>{{ item.title }}</td>
+                                <td>{{ item.type | capitalize }}</td>
+                                <td>{{ item.watch_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
