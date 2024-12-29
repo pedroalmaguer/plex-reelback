@@ -16,3 +16,6 @@ __pycache__/app.cpython-39.pyc
 
 #python
 __pycache__/
+
+#Misc
+CHANGELOG.md

@@ -3,65 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Stats</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <title>Movie Stats</title>
+    <!-- Modern font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- For charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                <h1>Stats App {{name}}</h1>
-            </div>
+    <!-- User selection overlay (shown first) -->
+    <div id="user-select-overlay" class="overlay">
+        <div class="select-container">
+            <h1>Welcome to Your Movie Year in Review</h1>
             <form id="user-form" method="post" action="/set_user">
-                <label for="user">Select User:</label>
-                <select id="user" name="user_id" onchange="document.getElementById('user-form').submit();">
-                    <option value="" disabled {% if not session.get('user_id') %}selected{% endif %}>Select a user</option>
+                <select id="user" name="user_id">
+                    <option value="" disabled {% if not session.get('user_id') %}selected{% endif %}>Choose your profile</option>
                     {% for user in users %}
                     <option value="{{ user.user_id }}" {% if session.get('user_id') == user.user_id %}selected{% endif %}>
-                        {{ user.username }} 
+                        {{ user.username }}
                     </option>
                     {% endfor %}
                 </select>
+                <button type="button" onclick="startExperience()">Start Your Experience</button>
             </form>
-            
-            
-            <nav>
-                <button onclick="loadContent('/most_popular', 'Most Popular 2024')">Most Popular</button>
-                <button onclick="loadContent('/stats_overview', 'Overview')">Overview</button>
-                <button onclick="loadContent('/movies_2024', 'Movies Watched')">Movies Watched</button>
-                <button onclick="loadContent('/last_watched', 'Last Watched')">Last Watched</button>
-            </nav>
-        </aside>
+        </div>
+    </div>
 
-        <!-- Main Content -->
-        <main class="content">
-            <h1 class="content-title">Welcome!</h1>
-            <div id="stats-content">
-                <p>Select a user and a stat to get started.</p>
-            </div>
-        </main>
+    <!-- Main content (initially hidden) -->
+    <div id="stats-experience" class="hidden">
+        <div class="sections-container">
+            <section class="stat-section" id="overview">
+                <div class="stat-content"></div>
+            </section>
+            
+            <section class="stat-section" id="most-popular">
+                <div class="stat-content"></div>
+            </section>
+
+            <section class="stat-section" id="movies-2024">
+                <div class="stat-content"></div>
+            </section>
+
+            <section class="stat-section" id="last-watched">
+                <div class="stat-content"></div>
+            </section>
+        </div>
+
+        <!-- Progress indicator -->
+        <div class="progress-dots">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
     </div>
 
     <script>
-        function loadContent(endpoint, title) {
-            console.log(`Loading content from ${endpoint}`); // Debugging
-            const statsContent = document.getElementById('stats-content');
-            statsContent.innerHTML = ''; // Clear previous content
-            statsContent.classList.remove('loaded');
+        let currentSection = 0;
+        const sections = document.querySelectorAll('.stat-section');
+        
+        function startExperience() {
+            const userId = document.getElementById('user').value;
+            console.log('Selected user ID:', userId); // Debug log
+            
+            if (!userId) {
+                alert('Please select a user first');
+                return;
+            }
+
+            // Create FormData for the request
+            const formData = new FormData();
+            formData.append('user_id', userId);
+
+            // First set the user
+            fetch('/set_user', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Response status:', response.status); // Debug log
+                return response.json().then(data => ({
+                    ok: response.ok,
+                    data: data
+                }));
+            })
+            .then(({ok, data}) => {
+                console.log('Response data:', data); // Debug log
+                
+                if (ok && data.success) {
+                    // Remove the overlay and show content
+                    document.getElementById('user-select-overlay').classList.add('fade-out');
+                    document.getElementById('stats-experience').classList.remove('hidden');
+                    
+                    // Load all sections
+                    loadSection('/stats_overview', 'overview');
+                    loadSection('/most_popular', 'most-popular');
+                    loadSection('/movies_2024', 'movies-2024');
+                    loadSection('/last_watched', 'last-watched');
+                } else {
+                    throw new Error(data.error || 'Failed to set user');
+                }
+            })
+            .catch(error => {
+                console.error('Error setting user:', error);
+                alert('Error setting user. Please try again. Details: ' + error.message);
+            });
+        }
+
+        function loadSection(endpoint, sectionId) {
             fetch(endpoint, { method: 'POST' })
-                .then((response) => response.text())
-                .then((html) => {
-                    statsContent.innerHTML = html;
-                    document.querySelector('.content-title').innerText = title;
-                    statsContent.classList.add('loaded');
-                })
-                .catch((err) => {
-                    statsContent.innerHTML = '<p>Error loading content. Please try again.</p>';
-                    console.error('Error:', err);
+                .then(response => response.text())
+                .then(html => {
+                    document.querySelector(`#${sectionId} .stat-content`).innerHTML = html;
                 });
+        }
+
+        // Handle scrolling between sections
+        window.addEventListener('wheel', handleScroll);
+        window.addEventListener('keydown', handleKeyPress);
+
+        function handleScroll(e) {
+            e.preventDefault();
+            if (e.deltaY > 0) nextSection();
+            else if (e.deltaY < 0) previousSection();
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight') nextSection();
+            else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') previousSection();
+        }
+
+        function updateSection(index) {
+            sections.forEach((section, i) => {
+                section.style.transform = `translateY(${100 * (i - index)}%)`;
+            });
+            
+            // Update progress dots
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+        }
+
+        function nextSection() {
+            if (currentSection < sections.length - 1) {
+                currentSection++;
+                updateSection(currentSection);
+            }
+        }
+
+        function previousSection() {
+            if (currentSection > 0) {
+                currentSection--;
+                updateSection(currentSection);
+            }
         }
     </script>
 </body>

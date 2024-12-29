@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, session, redirect
+from flask import Flask, render_template, request, session, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os
 import json
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
+
+csrf = CSRFProtect(app)
 
 # Depriated. Had issues with connecting to file.
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///taut.db'  # Path to your SQLite database
@@ -69,11 +72,11 @@ def index():
 
 # Route to set user
 @app.route('/set_user', methods=['POST'])
+@csrf.exempt
 def set_user():
     user_id = request.form.get('user_id')
-    if user_id:
-        session['user_id'] = int(user_id)
-    return redirect('/')
+    session['user_id'] = user_id
+    return jsonify({'success': True})
 
 # Route for stats overview
 @app.route('/stats_overview', methods=['POST'])
@@ -282,6 +285,14 @@ def most_popular():
 #         return f"Users: {[user.username for user in users]}"
 #     except Exception as e:
 #         return f"Error fetching users: {e}"
+
+@app.route('/test_db')
+def test_db():
+    try:
+        users = User.query.all()
+        return jsonify({'success': True, 'user_count': len(users)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True)
