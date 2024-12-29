@@ -1,5 +1,47 @@
-<div>
-    <h2>Movies Watched in 2024</h2>
-    <canvas id="statsChart"></canvas>
-    <script>loadChart();</script>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies Watched in 2024</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div>
+        <h2>Movies Watched in 2024</h2>
+        {% if movies %}
+            <ul>
+                {% for movie in movies %}
+                    <ul>{{ movie.title }} - Watched {{ movie.views }} times</ul>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No movies watched in 2024.</p>
+        {% endif %}
+
+        <canvas id="statsChart"></canvas>
+        <script>
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            const statsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [{% for movie in movies %}'{{ movie.title }}',{% endfor %}],
+                    datasets: [{
+                        label: 'Times Watched',
+                        data: [{% for movie in movies %}{{ movie.views }},{% endfor %}],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

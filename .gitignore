@@ -12,3 +12,7 @@ taut.db-wal
 #Excluded user files
 excluded_users.json
 __pycache__/app.cpython-39.pyc
+
+
+#python
+__pycache__/
