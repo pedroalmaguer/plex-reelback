@@ -60,45 +60,86 @@
     <script>
         let currentSection = 0;
         const sections = document.querySelectorAll('.stat-section');
-        
+        const sectionEndpoints = {
+            'overview': '/stats_overview',
+            'most-popular': '/most_popular',
+            'movies-2024': '/movies_2024',
+            'last-watched': '/last_watched'
+        };
+
+        function updateSection(index) {
+            sections.forEach((section, i) => {
+                section.style.transform = `translateY(${100 * (i - index)}%)`;
+                section.classList.toggle('active', i === index);
+            });
+            
+            // Update progress dots
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+
+            // Load current section if not loaded
+            const currentSection = sections[index];
+            const sectionId = currentSection.id;
+            if (!currentSection.dataset.loaded) {
+                console.log(`Loading section: ${sectionId}`); // Debug log
+                loadSection(sectionEndpoints[sectionId], sectionId);
+                currentSection.dataset.loaded = 'true';
+            }
+
+            // Preload next section if it exists
+            if (index < sections.length - 1 && !sections[index + 1].dataset.loaded) {
+                const nextSectionId = sections[index + 1].id;
+                console.log(`Preloading next section: ${nextSectionId}`); // Debug log
+                loadSection(sectionEndpoints[nextSectionId], nextSectionId);
+                sections[index + 1].dataset.loaded = 'true';
+            }
+        }
+
+        function loadSection(endpoint, sectionId) {
+            console.log(`Fetching ${endpoint} for section ${sectionId}`); // Debug log
+            fetch(endpoint, { 
+                method: 'POST'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                console.log(`Loaded content for ${sectionId}`); // Debug log
+                document.querySelector(`#${sectionId} .stat-content`).innerHTML = html;
+            })
+            .catch(error => {
+                console.error(`Error loading ${sectionId}:`, error);
+                document.querySelector(`#${sectionId} .stat-content`).innerHTML = 
+                    `<div class="error">Failed to load content. Please try refreshing.</div>`;
+            });
+        }
+
         function startExperience() {
             const userId = document.getElementById('user').value;
-            console.log('Selected user ID:', userId); // Debug log
-            
             if (!userId) {
                 alert('Please select a user first');
                 return;
             }
 
-            // Create FormData for the request
-            const formData = new FormData();
-            formData.append('user_id', userId);
-
-            // First set the user
             fetch('/set_user', {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `user_id=${userId}`
             })
-            .then(response => {
-                console.log('Response status:', response.status); // Debug log
-                return response.json().then(data => ({
-                    ok: response.ok,
-                    data: data
-                }));
-            })
-            .then(({ok, data}) => {
-                console.log('Response data:', data); // Debug log
-                
-                if (ok && data.success) {
-                    // Remove the overlay and show content
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
                     document.getElementById('user-select-overlay').classList.add('fade-out');
                     document.getElementById('stats-experience').classList.remove('hidden');
                     
-                    // Load all sections
-                    loadSection('/stats_overview', 'overview');
-                    loadSection('/most_popular', 'most-popular');
-                    loadSection('/movies_2024', 'movies-2024');
-                    loadSection('/last_watched', 'last-watched');
+                    // Initialize first section
+                    updateSection(0);
                 } else {
                     throw new Error(data.error || 'Failed to set user');
                 }
@@ -107,14 +148,6 @@
                 console.error('Error setting user:', error);
                 alert('Error setting user. Please try again. Details: ' + error.message);
             });
-        }
-
-        function loadSection(endpoint, sectionId) {
-            fetch(endpoint, { method: 'POST' })
-                .then(response => response.text())
-                .then(html => {
-                    document.querySelector(`#${sectionId} .stat-content`).innerHTML = html;
-                });
         }
 
         // Handle scrolling between sections
@@ -130,17 +163,6 @@
         function handleKeyPress(e) {
             if (e.key === 'ArrowDown' || e.key === 'ArrowRight') nextSection();
             else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') previousSection();
-        }
-
-        function updateSection(index) {
-            sections.forEach((section, i) => {
-                section.style.transform = `translateY(${100 * (i - index)}%)`;
-            });
-            
-            // Update progress dots
-            document.querySelectorAll('.dot').forEach((dot, i) => {
-                dot.classList.toggle('active', i === index);
-            });
         }
 
         function nextSection() {
