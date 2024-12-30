@@ -14,5 +14,9 @@ excluded_users.json
 __pycache__/app.cpython-39.pyc
 
 
-#python
+#Directories
 __pycache__/
+sql_test_queries/
+
+#Misc
+CHANGELOG.md

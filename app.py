@@ -1,14 +1,14 @@
-from flask import Flask, render_template, request, session, redirect
+from flask import Flask, render_template, request, session, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os
 import json
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"
+app.secret_key = "your-secret-key-here"
 
-# Depriated. Had issues with connecting to file.
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///taut.db'  # Path to your SQLite database
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+# Disable CSRF protection globally
+app.config['WTF_CSRF_ENABLED'] = False
 
 #Define the database path
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -69,52 +69,26 @@ def index():
 
 # Route to set user
 @app.route('/set_user', methods=['POST'])
+
 def set_user():
     user_id = request.form.get('user_id')
-    if user_id:
-        session['user_id'] = int(user_id)
-    return redirect('/')
+    session['user_id'] = user_id
+    return jsonify({'success': True})
 
 # Route for stats overview
 @app.route('/stats_overview', methods=['POST'])
 def stats_overview():
-    """
-    Gathers and displays an overview of a user's statistics, including:
-    - Total sessions
-    - Total minutes watched
-    - Number of unique titles watched
-
-    Query Logic:
-    - Fetch total number of viewing sessions for the user.
-    - Calculate total minutes watched by summing the duration of all sessions.
-    - Count the number of unique titles (movies/shows) the user has watched.
-    """
-    user_id = session.get('user_id')
-    if not user_id:
-        app.logger.error("No user selected.")
-        return "<p>No user selected. Please select a user first.</p>"
-
-    try:
-        total_sessions = SessionHistory.query.filter_by(user_id=user_id).count()
-        total_minutes_watched = db.session.query(
-            db.func.sum((SessionHistory.stopped - SessionHistory.started) / 60)
-        ).filter(SessionHistory.user_id == user_id).scalar()
-
-        unique_titles_watched = db.session.query(
-            db.func.count(db.distinct(SessionHistory.parent_rating_key))
-        ).filter(SessionHistory.user_id == user_id).scalar()
-
-        stats = {
-            'total_sessions': total_sessions,
-            'total_minutes_watched': total_minutes_watched or 0,
-            'unique_titles_watched': unique_titles_watched or 0
-        }
-        app.logger.debug(f"Stats: {stats}")
-        username = User.query.filter_by(user_id=user_id).first().username
-        return render_template('stats_overview.html', stats=stats, username=username)
-    except Exception as e:
-        app.logger.error(f"Error in stats_overview: {e}")
-        return f"Error occurred: {e}", 500
+    # Get your stats from the database
+    total_minutes = 99197.366666666664  # Your actual query here
+    total_sessions = 1856  # Your actual query here
+    unique_titles = 188   # Your actual query here
+    
+    formatted_duration = format_duration(total_minutes)
+    
+    return render_template('partials/stats_overview.html', 
+                         watch_time=formatted_duration,
+                         total_sessions="{:,}".format(total_sessions),  # Add commas for thousands
+                         unique_titles="{:,}".format(unique_titles))    # Add commas for thousands
 
 
 # Route for movies watched in 2024
@@ -146,6 +120,7 @@ def movies_2024():
         .filter(SessionHistory.media_type == 'movie')\
         .group_by(SessionHistoryMetadata.full_title)\
         .order_by(db.func.count(SessionHistory.rating_key).desc())\
+        .limit(10)\
         .all()
 
         app.logger.debug(f"Fetched movies: {movies}")
@@ -282,6 +257,45 @@ def most_popular():
 #         return f"Users: {[user.username for user in users]}"
 #     except Exception as e:
 #         return f"Error fetching users: {e}"
+
+@app.route('/test_db')
+def test_db():
+    try:
+        users = User.query.all()
+        return jsonify({'success': True, 'user_count': len(users)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+def format_duration(minutes):
+    """Convert minutes to human readable duration."""
+    if not minutes:
+        return "0 minutes"
+        
+    # Round up to nearest minute
+    minutes = round(minutes)
+    
+    days = minutes // (24 * 60)
+    remaining_minutes = minutes % (24 * 60)
+    
+    hours = remaining_minutes // 60
+    final_minutes = remaining_minutes % 60
+    
+    parts = []
+    if days > 0:
+        parts.append(f"{days} {'day' if days == 1 else 'days'}")
+    if hours > 0:
+        parts.append(f"{hours} {'hour' if hours == 1 else 'hours'}")
+    if final_minutes > 0:
+        parts.append(f"{final_minutes} {'minute' if final_minutes == 1 else 'minutes'}")
+    
+    return ", ".join(parts)
+
+# In your route, use it like this:
+@app.route('/overview', methods=['POST'])
+def overview():
+    total_minutes = 999197.37  # Your actual value here
+    formatted_duration = format_duration(total_minutes)
+    return render_template('partials/overview.html', watch_time=formatted_duration)
 
 if __name__ == '__main__':
     app.run(debug=True)
