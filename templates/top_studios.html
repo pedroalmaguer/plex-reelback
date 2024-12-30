@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Movie Studios</title>
+</head>
+<body>
+    <div>
+        <h2>Top 5 Movie Studios</h2>
+        {% if studios %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Studio</th>
+                    <th>Watch Count</th>
+                    <th>Total Time Watched (minutes)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for studio in studios %}
+                <tr>
+                    <td>{{ studio.studio }}</td>
+                    <td>{{ studio.watch_count }}</td>
+                    <td>{{ studio.total_time }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No data available for top studios.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

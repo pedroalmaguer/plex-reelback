@@ -26,6 +26,7 @@
             </form>
             <nav>
                 <button onclick="loadContent('/stats_overview', 'Overview')">Overview</button>
+                <button onclick="loadContent('/top_studios', 'Top Studios')">Top Studios</button>
                 <button onclick="loadContent('/movies_2024', 'Movies Watched')">Movies Watched</button>
                 <button onclick="loadContent('/last_watched', 'Last Watched')">Last Watched</button>
             </nav>
@@ -41,5 +42,6 @@
             </div>
         </main>
     </div>
+    <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
 </body>
 </html>
