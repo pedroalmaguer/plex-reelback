@@ -9,41 +9,28 @@
                 <div class="popular-list">
                     <h2>Top 10 Most Watched Movies (2024)</h2>
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Type</th>
-                                <th>Watch Count</th>
-                            </tr>
-                        </thead>
+
                         <tbody>
                             {% for item in items if item.type == 'movie' %}
                             <tr>
                                 <td>{{ item.title }}</td>
-                                <td>{{ item.type }}</td>
-                                <td>{{ item.watch_count }}</td>
+
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                <br>
                 <!-- TV Shows Table -->
                 <div class="popular-list">
                     <h2>Top 10 Most Watched TV Shows (2024)</h2>
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Type</th>
-                                <th>Watch Count</th>
-                            </tr>
-                        </thead>
+
                         <tbody>
                             {% for item in items if item.type == 'show' %}
                             <tr>
                                 <td>{{ item.title }}</td>
-                                <td>{{ item.type }}</td>
-                                <td>{{ item.watch_count }}</td>
+
                             </tr>
                             {% endfor %}
                         </tbody>
