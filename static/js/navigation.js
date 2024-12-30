@@ -35,3 +35,24 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     document.addEventListener('touchmove', handleScroll, { passive: true });
 }); 
+
+function loadContent(endpoint, title) {
+    console.log(`Fetching content from ${endpoint}`); // Debug log
+    fetch(endpoint, { method: 'POST' })
+        .then(response => {
+            console.log(`Response status: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            console.log("Content loaded successfully");
+            document.querySelector('.stats-content').innerHTML = html;
+        })
+        .catch(error => {
+            console.error(`Error loading content from ${endpoint}:`, error);
+            document.querySelector('.stats-content').innerHTML = 
+                `<div class="error">Failed to load content. Please try refreshing.</div>`;
+        });
+}

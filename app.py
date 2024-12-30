@@ -35,6 +35,7 @@ class SessionHistoryMetadata(db.Model):
     duration = db.Column(db.Integer, nullable=False)
     grandparent_title = db.Column(db.String, nullable=False)
     studio = db.Column(db.String, nullable=True)
+    studio = db.Column(db.String, nullable=True)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -117,42 +118,6 @@ def stats_overview():
         app.logger.error(f"Error in stats_overview: {e}")
         return f"Error occurred: {e}", 500
 
-@app.route('/top_studios', methods=['POST'])
-def top_studios():
-    user_id = session.get('user_id')
-    if not user_id:
-        return render_template('top-studios.html', studios=[])
-
-    try:
-        # Query top 5 studios
-        top_studios = db.session.query(
-            SessionHistoryMetadata.studio.label('studio'),
-            db.func.count(SessionHistory.rating_key).label('watch_count'),
-            db.func.sum((SessionHistory.stopped - SessionHistory.started) / 60).label('total_time')
-        ).join(
-            SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key
-        ).filter(
-            SessionHistory.user_id == user_id,
-            SessionHistory.media_type == 'movie'
-        ).group_by(
-            SessionHistoryMetadata.studio
-        ).order_by(
-            db.func.count(SessionHistory.rating_key).desc()
-        ).limit(5).all()
-
-        studios = [
-            {
-                'studio': studio,
-                'watch_count': watch_count,
-                'total_time': round(total_time, 2) if total_time else 0
-            }
-            for studio, watch_count, total_time in top_studios
-        ]
-
-        return render_template('top_studios.html', studios=studios)
-    except Exception as e:
-        app.logger.error(f"Error in top_studios: {e}")
-        return render_template('top_studios.html', studios=[])
 
 
 # Route for movies watched in 2024
@@ -312,6 +277,49 @@ def most_popular():
     except Exception as e:
         app.logger.error(f"Error in most_popular route: {e}")
         return f"Error occurred: {e}", 500
+
+@app.route('/top_studios', methods=['POST'])
+def top_studios():
+    """
+    Retrieves the top 5 movie studios watched by the selected user.
+    """
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'error': 'No user selected. Please select a user first.'}), 400
+
+    try:
+        # Query top 5 studios
+        top_studios = db.session.query(
+            SessionHistoryMetadata.studio.label('studio'),
+            db.func.count(SessionHistory.rating_key).label('watch_count'),
+            db.func.sum((SessionHistory.stopped - SessionHistory.started) / 60).label('total_time')
+        ).join(
+            SessionHistory, SessionHistory.rating_key == SessionHistoryMetadata.rating_key
+        ).filter(
+            SessionHistory.user_id == user_id,
+            SessionHistory.media_type == 'movie'
+        ).group_by(
+            SessionHistoryMetadata.studio
+        ).order_by(
+            db.func.count(SessionHistory.rating_key).desc()
+        ).limit(5).all()
+
+        # Format data for the template
+        studios = [
+            {
+                'studio': studio if studio else 'Unknown Studio',
+                'watch_count': watch_count,
+                'total_time': round(total_time, 2) if total_time else 0
+            }
+            for studio, watch_count, total_time in top_studios
+        ]
+
+        return render_template('top_studios.html', studios=studios)
+    except Exception as e:
+        app.logger.error(f"Error in top_studios: {e}")
+        return f"Error occurred: {e}", 500
+
+
 
 # Debugging routes
 # @app.route('/test_users')
