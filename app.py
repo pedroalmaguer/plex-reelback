@@ -35,7 +35,6 @@ class SessionHistoryMetadata(db.Model):
     duration = db.Column(db.Integer, nullable=False)
     grandparent_title = db.Column(db.String, nullable=False)
     studio = db.Column(db.String, nullable=True)
-    studio = db.Column(db.String, nullable=True)
 
 class User(db.Model):
     __tablename__ = 'users'
