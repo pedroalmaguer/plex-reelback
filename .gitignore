@@ -16,3 +16,7 @@ __pycache__/app.cpython-39.pyc
 
 #python
 __pycache__/
+
+#Misc
+sql_test_queries
+CHANGELOG.md
